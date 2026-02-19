@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>MyTube Studio - 10本連続アップロード対応</title>
+    <style>
+        body { font-family: sans-serif; background: #f9f9f9; display: flex; justify-content: center; padding: 50px; }
+        .upload-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 400px; }
+        .status-badge { background: #eee; padding: 5px 10px; border-radius: 5px; font-size: 12px; margin-bottom: 10px; display: inline-block; }
+        input, textarea { width: 100%; margin-bottom: 15px; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 8px; }
+        .upload-btn { width: 100%; background: #065fd4; color: white; border: none; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .link-text { display: block; text-align: center; margin-top: 15px; color: #065fd4; text-decoration: none; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="upload-card">
+        <div class="status-badge" id="video-count-badge">現在の投稿数: 0本</div>
+        <h2>動画を投稿する (10本以上対応)</h2>
+        <p style="font-size: 12px; color: #666;">※ sample-video(2)などを順番に選択してください</p>
+        
+        <input type="file" id="video-file" accept="video/*">
+        <input type="text" id="video-title" placeholder="動画のタイトル (例: 動画その2)">
+        <textarea id="video-desc" rows="3" placeholder="説明文を入力"></textarea>
+        
+        <button class="upload-btn" id="submit-btn">この動画を公開する</button>
+        <a href="index.html" class="link-text">視聴ページへ戻る</a>
+    </div>
+
+    <script>
+        // 現在何本あるか表示を更新
+        function updateCount() {
+            const list = JSON.parse(localStorage.getItem('myVideos')) || [];
+            document.getElementById('video-count-badge').textContent = `現在の投稿数: ${list.length}本`;
+        }
+        updateCount();
+
+        document.getElementById('submit-btn').onclick = () => {
+            const fileInput = document.getElementById('video-file');
+            const file = fileInput.files[0];
+            const title = document.getElementById('video-title').value;
+            const desc = document.getElementById('video-desc').value;
+
+            if (!file || !title) return alert("動画とタイトルを入力してください");
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const videoItem = {
+                    id: Date.now(),
+                    data: e.target.result,
+                    title: title,
+                    desc: desc
+                };
+
+                const videoList = JSON.parse(localStorage.getItem('myVideos')) || [];
+                videoList.push(videoItem);
+                
+                // ブラウザの容量制限チェック（LocalStorageは約5〜10MBまで）
+                try {
+                    localStorage.setItem('myVideos', JSON.stringify(videoList));
+                    localStorage.setItem('currentVideoId', videoItem.id);
+                    alert("投稿成功！");
+                    
+                    // 入力欄をリセットして次の投稿をしやすくする
+                    fileInput.value = "";
+                    document.getElementById('video-title').value = "";
+                    document.getElementById('video-desc').value = "";
+                    updateCount();
+                } catch (e) {
+                    alert("エラー：動画が大きすぎるか、ブラウザの保存容量がいっぱいです。もっと短い動画（数秒）で試してください。");
+                }
+            };
+            reader.readAsDataURL(file);
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+/* --- 前回のコードはそのまま維持 --- */
+body { margin: 0; font-family: 'Roboto', sans-serif; background-color: #f9f9f9; }
+.navbar { display: flex; justify-content: space-between; align-items: center; padding: 0 20px; height: 56px; background: white; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #eee; }
+.search-container { display: flex; width: 40%; }
+.search-input { width: 100%; padding: 8px 12px; border: 1px solid #ccc; border-radius: 40px 0 0 40px; outline: none; }
+.search-btn { padding: 0 20px; border: 1px solid #ccc; border-left: none; background: #f8f8f8; border-radius: 0 40px 40px 0; cursor: pointer; }
+.main-layout { display: flex; max-width: 1000px; margin: 20px auto; gap: 24px; padding: 0 24px; }
+.video-container { flex: 2; }
+.player-wrapper { aspect-ratio: 16 / 9; background: black; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+.video-title { font-size: 18px; margin-top: 12px; font-weight: bold; }
+.video-stats-bar { display: flex; justify-content: space-between; color: #606060; font-size: 13px; margin-top: 8px; }
+.actions button { background: none; border: none; font-weight: bold; margin-left: 10px; cursor: pointer; font-size: 13px; color: #0f0f0f; transition: 0.2s; }
+
+/* --- 新しく追加：高評価が押された時の色 --- */
+.actions button.active {
+    color: #065fd4; /* YouTube風の青色 */
+}
+
+.channel-section { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; }
+.channel-left { display: flex; align-items: center; gap: 12px; }
+.channel-icon { width: 36px; height: 36px; background: #ddd; border-radius: 50%; }
+.channel-name { font-weight: bold; font-size: 14px; }
+.sub-count { font-size: 12px; color: #606060; }
+
+.sub-btn { background: #0f0f0f; color: white; border: none; padding: 8px 16px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 14px; transition: 0.2s; }
+
+/* --- 新しく追加：登録済みボタンのデザイン --- */
+.sub-btn.subscribed {
+    background: #e5e5e5;
+    color: #0f0f0f;
+}
+
+.recommend-sidebar h3 { font-size: 15px; margin-bottom: 12px; }
+.rec-card { display: flex; gap: 8px; margin-bottom: 12px; cursor: pointer; }
+.rec-thumb { width: 140px; height: 78px; background: #ddd; border-radius: 8px; flex-shrink: 0; }
+.rec-text h4 { font-size: 13px; margin: 0 0 4px 0; line-height: 1.2; }
+.rec-text p { font-size: 11px; color: #606060; margin: 0; }

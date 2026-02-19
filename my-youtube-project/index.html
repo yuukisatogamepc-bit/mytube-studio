@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>MyTube - 検索機能付き視聴ページ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { margin: 0; font-family: 'Roboto', sans-serif; background: #f9f9f9; padding-bottom: 50px; }
+        
+        /* ヘッダーと検索バー */
+        .navbar { display: flex; justify-content: space-between; padding: 0 20px; height: 56px; background: white; align-items: center; border-bottom: 1px solid #eee; position: sticky; top: 0; z-index: 100; }
+        .search-container { flex: 0 1 400px; display: flex; margin: 0 20px; }
+        .search-bar { width: 100%; padding: 8px 16px; border: 1px solid #ccc; border-radius: 20px 0 0 20px; outline: none; font-size: 14px; }
+        .search-bar:focus { border-color: #065fd4; }
+        .search-btn { padding: 0 16px; border: 1px solid #ccc; border-left: none; background: #f8f8f8; border-radius: 0 20px 20px 0; cursor: pointer; }
+
+        .main-layout { display: flex; max-width: 1200px; margin: 20px auto; gap: 24px; padding: 0 24px; }
+        .video-container { flex: 2.5; }
+        .player-wrapper { aspect-ratio: 16/9; background: black; border-radius: 12px; overflow: hidden; }
+        
+        /* 評価・登録セクション */
+        .video-actions { display: flex; justify-content: space-between; align-items: center; margin: 15px 0; gap: 10px; }
+        .rating-capsule { display: flex; background: #eee; border-radius: 20px; overflow: hidden; }
+        .rating-capsule button { border: none; background: none; padding: 8px 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px; }
+        #like-btn.active { color: #065fd4; }
+        #dislike-btn.active { color: #cc0000; }
+
+        .sub-btn { background: #0f0f0f; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; }
+        .sub-btn.subscribed { background: #e5e5e5; color: black; }
+        #bell-icon { font-size: 20px; cursor: pointer; display: none; margin-left: 8px; }
+
+        /* 履歴サイドバー */
+        .history-sidebar { flex: 1; background: white; padding: 15px; border-radius: 12px; border: 1px solid #eee; height: fit-content; max-height: 80vh; overflow-y: auto; }
+        .history-item { display: flex; gap: 10px; margin-bottom: 12px; cursor: pointer; padding: 8px; border-radius: 8px; border: 1px solid transparent; }
+        .history-item:hover { background: #f2f2f2; }
+        .history-item.hidden { display: none; } /* 検索で弾かれた時に隠す */
+        .history-thumb { width: 100px; height: 56px; background: #333; border-radius: 8px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 14px; }
+        
+        .video-desc { background: #f2f2f2; padding: 15px; border-radius: 12px; font-size: 14px; white-space: pre-wrap; margin-top: 15px; }
+
+        /* コメント欄 */
+        .comment-section { margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; }
+        .comment-input-area { display: flex; flex-direction: column; gap: 10px; margin-bottom: 25px; }
+        .comment-input-area input, .comment-input-area textarea { padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-family: inherit; }
+        .post-btn { background: #065fd4; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; align-self: flex-end; }
+        .comment-list { list-style: none; padding: 0; }
+        .comment-item { display: flex; gap: 12px; margin-bottom: 20px; }
+        .comment-icon { width: 32px; height: 32px; background: #ccc; border-radius: 50%; }
+
+        .nav-btn { background: #065fd4; color: white; padding: 8px 16px; border-radius: 20px; text-decoration: none; font-size: 14px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <header class="navbar">
+        <div style="font-weight: bold; color: red; font-size: 24px;">MyTube</div>
+        
+        <div class="search-container">
+            <input type="text" id="search-input" class="search-bar" placeholder="検索（タイトルの部分一致）">
+            <button class="search-btn">🔍</button>
+        </div>
+
+        <div>
+            <button onclick="clearAll()" style="font-size: 10px; margin-right: 10px; cursor: pointer;">リセット</button>
+            <a href="upload.html" class="nav-btn">＋ 投稿する</a>
+        </div>
+    </header>
+
+    <div class="main-layout">
+        <main class="video-container">
+            <div class="player-wrapper">
+                <video id="main-video" controls width="100%" height="100%"></video>
+            </div>
+            <h1 id="display-title" style="font-size: 20px; margin: 15px 0;">タイトル</h1>
+            
+            <div class="video-actions">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="width: 40px; height: 40px; background: #ddd; border-radius: 50%;"></div>
+                    <div><b style="font-size: 14px;">クリエイター</b><div id="sub-count" style="font-size: 12px; color: #606060;">登録者 100人</div></div>
+                    <button class="sub-btn" id="sub-btn">チャンネル登録</button>
+                    <span id="bell-icon">🔔</span>
+                </div>
+                <div class="rating-capsule">
+                    <button id="like-btn">👍 <span id="like-count">0</span></button>
+                    <button id="dislike-btn">👎</button>
+                </div>
+            </div>
+            <div class="video-desc" id="display-desc">説明文</div>
+
+            <section class="comment-section">
+                <h4>コメント</h4>
+                <div class="comment-input-area">
+                    <input type="text" id="comment-user" placeholder="名前">
+                    <textarea id="comment-body" rows="2" placeholder="コメントを追加..."></textarea>
+                    <button class="post-btn" id="post-comment">コメント投稿</button>
+                </div>
+                <ul class="comment-list" id="comment-list"></ul>
+            </section>
+        </main>
+
+        <aside class="history-sidebar">
+            <h3 style="font-size: 16px; margin-top: 0;">投稿履歴</h3>
+            <div id="history-list"></div>
+        </aside>
+    </div>
+
+    <script>
+        let videoList = JSON.parse(localStorage.getItem('myVideos')) || [];
+        let currentVideoId = null;
+
+        // 動画読み込み・表示
+        function loadVideo(id) {
+            currentVideoId = id;
+            const video = videoList.find(v => v.id == id);
+            if (video) {
+                const player = document.getElementById('main-video');
+                player.src = video.data;
+                document.getElementById('display-title').textContent = video.title;
+                document.getElementById('display-desc').textContent = video.desc;
+                
+                const list = document.getElementById('comment-list');
+                list.innerHTML = "";
+                const comments = JSON.parse(localStorage.getItem(`comments_${id}`)) || [];
+                comments.forEach(c => renderComment(c.user, c.body));
+                
+                player.play();
+                localStorage.setItem('currentVideoId', id);
+            }
+        }
+
+        // コメント描画
+        function renderComment(user, body) {
+            const li = document.createElement('li');
+            li.className = 'comment-item';
+            li.innerHTML = `<div class="comment-icon"></div><div><b>${user}</b><p style="margin:4px 0; font-size:14px;">${body}</p></div>`;
+            document.getElementById('comment-list').prepend(li);
+        }
+
+        // 初期化と履歴生成
+        window.onload = () => {
+            const listContainer = document.getElementById('history-list');
+            videoList.forEach((v, index) => {
+                const div = document.createElement('div');
+                div.className = 'history-item';
+                div.setAttribute('data-title', v.title); // 検索用にタイトルを保持
+                div.onclick = () => loadVideo(v.id);
+                div.innerHTML = `<div class="history-thumb">${index + 1}</div><div style="font-size:12px; font-weight:bold;">${v.title}</div>`;
+                listContainer.appendChild(div);
+            });
+
+            const savedId = localStorage.getItem('currentVideoId') || (videoList.length > 0 ? videoList[0].id : null);
+            if (savedId) loadVideo(savedId);
+        };
+
+        // --- 検索機能の核心ロジック ---
+        const searchInput = document.getElementById('search-input');
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase(); // 小文字にして比較しやすくする
+            const items = document.querySelectorAll('.history-item');
+
+            items.forEach(item => {
+                const title = item.getAttribute('data-title').toLowerCase();
+                if (title.includes(query)) {
+                    item.classList.remove('hidden'); // 部分一致すれば表示
+                } else {
+                    item.classList.add('hidden');    // 一致しなければ隠す
+                }
+            });
+        });
+
+        // コメント投稿
+        document.getElementById('post-comment').onclick = () => {
+            if (!currentVideoId) return alert("動画を選択してください");
+            const user = document.getElementById('comment-user').value || "匿名";
+            const body = document.getElementById('comment-body').value;
+            if (body) {
+                renderComment(user, body);
+                const key = `comments_${currentVideoId}`;
+                const comments = JSON.parse(localStorage.getItem(key)) || [];
+                comments.push({ user, body });
+                localStorage.setItem(key, JSON.stringify(comments));
+                document.getElementById('comment-body').value = "";
+            }
+        };
+
+        // 高評価・登録などのボタン類（以前のまま）
+        const likeBtn = document.getElementById('like-btn');
+        const dislikeBtn = document.getElementById('dislike-btn');
+        likeBtn.onclick = () => { dislikeBtn.classList.remove('active'); likeBtn.classList.toggle('active'); };
+        dislikeBtn.onclick = () => { likeBtn.classList.remove('active'); dislikeBtn.classList.toggle('active'); };
+
+        const subBtn = document.getElementById('sub-btn');
+        const bell = document.getElementById('bell-icon');
+        subBtn.onclick = () => {
+            const isSub = subBtn.classList.toggle('subscribed');
+            subBtn.textContent = isSub ? '登録済み' : 'チャンネル登録';
+            bell.style.display = isSub ? 'inline-block' : 'none';
+        };
+        bell.onclick = () => {
+            const isOn = bell.textContent === '🔔';
+            bell.textContent = isOn ? '🔕' : '🔔';
+            alert(isOn ? "通知オフ" : "通知オン");
+        };
+
+        function clearAll() { if(confirm("全削除？")) { localStorage.clear(); location.reload(); } }
+    </script>
+</body>
+</html>
